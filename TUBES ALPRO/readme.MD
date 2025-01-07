@@ -28,6 +28,7 @@
 Deskripsi: Aplikasi ini digunakan oleh pasien dan dokter. Data yang diolah adalah data konsultasi antara pasien dan dokter.
 
 Spesifikasi:
+
 a.	Pengguna bisa mendaftar ke aplikasi sebagai pasien.
 
 b.	Pasien bisa konsultasi dengan posting pertanyaan melalui aplikasi.
@@ -41,5 +42,6 @@ e.	Pertanyaan perlu diberi tag tertentu untuk memudahkan pencarian dan penguruta
 f.	Pengguna bisa mencari pertanyaan tertentu berdasarkan tag yang dicari.
 
 g.	Dokter bisa menampilkan topik atau tag terurut berdasarkan jumlah pertanyaannya.
+
 
 
