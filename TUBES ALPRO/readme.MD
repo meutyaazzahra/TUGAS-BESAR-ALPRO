@@ -81,16 +81,16 @@ type Aplikasi struct {
 	IDPertanyaanSelanjutnya int
 }
 
-// Fungsi untuk mendaftarkan pasien
-func (aplikasi *Aplikasi) DaftarPasien(nama string) {
+// Fungsi untuk mendaftarkan pengguna
+func (aplikasi *Aplikasi) DaftarPengguna(nama, peran string) {
 	pengguna := Pengguna{
 		ID:    aplikasi.IDPenggunaSelanjutnya,
 		Nama:  nama,
-		Peran: "pasien",
+		Peran: peran,
 	}
 	aplikasi.Pengguna = append(aplikasi.Pengguna, pengguna)
 	aplikasi.IDPenggunaSelanjutnya++
-	fmt.Println("Pasien berhasil didaftarkan:", nama)
+	fmt.Println(peran, "berhasil didaftarkan:", nama)
 }
 
 // Fungsi untuk menambahkan pertanyaan
@@ -107,36 +107,41 @@ func (aplikasi *Aplikasi) TambahPertanyaan(namaPasien, isi string, tag []string)
 }
 
 // Fungsi untuk menambahkan tanggapan ke pertanyaan
-func (aplikasi *Aplikasi) TambahTanggapan(IDPertanyaan int, tanggapan string) {
+func (aplikasi *Aplikasi) TambahTanggapan(IDPertanyaan int, namaPengguna, role, tanggapan string) {
+	// Validasi apakah pengguna adalah dokter atau pasien
+	if role != "dokter" && role != "pasien" {
+		fmt.Println("Hanya dokter atau pasien yang dapat menambahkan tanggapan.")
+		return
+	}
+
+	// Cari pertanyaan berdasarkan ID
 	for i := range aplikasi.Pertanyaan {
 		if aplikasi.Pertanyaan[i].ID == IDPertanyaan {
-			aplikasi.Pertanyaan[i].Tanggapan = append(aplikasi.Pertanyaan[i].Tanggapan, tanggapan)
-			fmt.Println("Tanggapan berhasil ditambahkan ke pertanyaan ID:", IDPertanyaan)
+			aplikasi.Pertanyaan[i].Tanggapan = append(aplikasi.Pertanyaan[i].Tanggapan, fmt.Sprintf("%s (%s): %s", namaPengguna, role, tanggapan))
+			fmt.Println("Tanggapan berhasil ditambahkan oleh", role, ":", namaPengguna)
 			return
 		}
 	}
+
 	fmt.Println("Pertanyaan tidak ditemukan!")
 }
 
-// Fungsi untuk mencari pertanyaan berdasarkan kata kunci
-func (aplikasi *Aplikasi) CariPertanyaanKataKunci(kataKunci string) {
-	fmt.Println("Pertanyaan yang mengandung kata kunci:", kataKunci)
+// Fungsi untuk menampilkan forum konsultasi (daftar pertanyaan beserta tanggapan) bagi pengguna yang tidak terdaftar
+func (aplikasi *Aplikasi) LihatForum() {
+	fmt.Println("Daftar pertanyaan dan tanggapan di forum:")
 	for _, pertanyaan := range aplikasi.Pertanyaan {
-		if strings.Contains(strings.ToLower(pertanyaan.Isi), strings.ToLower(kataKunci)) {
-			fmt.Printf("ID: %d | Pasien: %s | Isi: %s\n", pertanyaan.ID, pertanyaan.Pasien, pertanyaan.Isi)
+		// Menampilkan informasi pertanyaan
+		fmt.Printf("ID: %d | Pasien: %s | Pertanyaan: %s | Tag: %v\n", pertanyaan.ID, pertanyaan.Pasien, pertanyaan.Isi, pertanyaan.Tag)
+
+		// Menampilkan tanggapan untuk pertanyaan tersebut
+		if len(pertanyaan.Tanggapan) > 0 {
+			fmt.Println("Tanggapan:")
+			for i, tanggapan := range pertanyaan.Tanggapan {
+				fmt.Printf("  %d. %s\n", i+1, tanggapan)
+			}
+		} else {
+			fmt.Println("  Belum ada tanggapan.")
 		}
-	}
-}
-
-// Fungsi untuk mengurutkan pertanyaan berdasarkan jumlah tag
-func (aplikasi *Aplikasi) UrutkanPertanyaanJumlahTag() {
-	sort.Slice(aplikasi.Pertanyaan, func(i, j int) bool {
-		return len(aplikasi.Pertanyaan[i].Tag) > len(aplikasi.Pertanyaan[j].Tag)
-	})
-
-	fmt.Println("Pertanyaan diurutkan berdasarkan jumlah tag:")
-	for _, pertanyaan := range aplikasi.Pertanyaan {
-		fmt.Printf("ID: %d | Pasien: %s | Jumlah Tag: %d | Isi: %s\n", pertanyaan.ID, pertanyaan.Pasien, len(pertanyaan.Tag), pertanyaan.Isi)
 	}
 }
 
@@ -190,26 +195,33 @@ func main() {
 		fmt.Println("================================================")
 		fmt.Println("\n          Menu Aplikasi Konsultasi          \n")
 		fmt.Println("================================================")
-		fmt.Println("1. Daftarkan Pasien")
-		fmt.Println("2. Tambah Pertanyaan")
-		fmt.Println("3. Tambah Tanggapan")
-		fmt.Println("4. Cari Pertanyaan berdasarkan Tag")
-		fmt.Println("5. Urutkan Tag berdasarkan Popularitas")
-		fmt.Println("6. Cari Pertanyaan berdasarkan Kata Kunci")
-		fmt.Println("7. Urutkan Pertanyaan berdasarkan Jumlah Tag")
-		fmt.Println("8. Keluar")
+		fmt.Println("1. Daftar Pengguna (Pasien/Dokter)")
+		fmt.Println("2. Lihat Forum (Pengguna Tidak Terdaftar)")
+		fmt.Println("3. Tambah Pertanyaan (Pasien)")
+		fmt.Println("4. Tambah Tanggapan (Dokter/Pasien)")
+		fmt.Println("5. Cari Pertanyaan berdasarkan Tag")
+		fmt.Println("6. Urutkan Tag berdasarkan Popularitas (Dokter)")
+		fmt.Println("7. Keluar")
 		fmt.Print("Pilih menu: ")
 		scanner.Scan()
 		pilihan := scanner.Text()
 
 		switch pilihan {
 		case "1":
-			fmt.Print("Masukkan nama pasien: ")
+			fmt.Print("Masukkan nama pengguna: ")
 			scanner.Scan()
 			nama := scanner.Text()
-			aplikasi.DaftarPasien(nama)
+			fmt.Print("Masukkan peran (pasien/dokter): ")
+			scanner.Scan()
+			peran := scanner.Text()
+			aplikasi.DaftarPengguna(nama, peran)
 
 		case "2":
+			// Menampilkan forum untuk pengguna yang tidak terdaftar
+			aplikasi.LihatForum()
+
+		case "3":
+			// Pastikan hanya pasien yang dapat menambah pertanyaan
 			fmt.Print("Masukkan nama pasien: ")
 			scanner.Scan()
 			nama := scanner.Text()
@@ -224,7 +236,14 @@ func main() {
 			}
 			aplikasi.TambahPertanyaan(nama, isi, tag)
 
-		case "3":
+		case "4":
+			// Pengguna bisa memberikan tanggapan jika sudah terdaftar
+			fmt.Print("Masukkan nama pengguna: ")
+			scanner.Scan()
+			nama := scanner.Text()
+			fmt.Print("Masukkan peran (dokter/pasien): ")
+			scanner.Scan()
+			role := scanner.Text()
 			fmt.Print("Masukkan ID pertanyaan: ")
 			scanner.Scan()
 			var ID int
@@ -232,27 +251,18 @@ func main() {
 			fmt.Print("Masukkan tanggapan: ")
 			scanner.Scan()
 			tanggapan := scanner.Text()
-			aplikasi.TambahTanggapan(ID, tanggapan)
-
-		case "4":
-			fmt.Print("Masukkan tag untuk mencari: ")
-			scanner.Scan()
-			tag := scanner.Text()
-			aplikasi.CariPertanyaanTag(tag)
+			aplikasi.TambahTanggapan(ID, nama, role, tanggapan)
 
 		case "5":
-			aplikasi.UrutkanTagPopularitas()
+			fmt.Print("Masukkan tag yang ingin dicari: ")
+			scanner.Scan()
+			tag := scanner.Text() // Membaca tag dari input pengguna
+			aplikasi.CariPertanyaanTag(tag)
 
 		case "6":
-			fmt.Print("Masukkan kata kunci untuk mencari: ")
-			scanner.Scan()
-			kataKunci := scanner.Text()
-			aplikasi.CariPertanyaanKataKunci(kataKunci)
+			aplikasi.UrutkanTagPopularitas()
 
 		case "7":
-			aplikasi.UrutkanPertanyaanJumlahTag()
-
-		case "8":
 			fmt.Println("Keluar dari aplikasi. Sampai jumpa!")
 			return
 
